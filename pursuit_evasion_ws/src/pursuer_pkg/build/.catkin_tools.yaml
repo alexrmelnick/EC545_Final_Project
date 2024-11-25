@@ -1,0 +1,6 @@
+devel_space: /home/jetson/pursuit_evasion_ws/src/pursuer_pkg/devel
+install: false
+install_space: /home/jetson/pursuit_evasion_ws/src/pursuer_pkg/install
+profile: default
+source_space: /home/jetson/pursuit_evasion_ws/src/pursuer_pkg/src
+workspace: /home/jetson/pursuit_evasion_ws/src/pursuer_pkg

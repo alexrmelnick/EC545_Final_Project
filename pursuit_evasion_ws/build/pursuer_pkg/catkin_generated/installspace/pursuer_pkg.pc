@@ -1,0 +1,8 @@
+prefix=/home/jetson/pursuit_evasion_ws/install
+
+Name: pursuer_pkg
+Description: Description of pursuer_pkg
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: 

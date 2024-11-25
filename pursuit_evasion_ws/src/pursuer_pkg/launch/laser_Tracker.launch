@@ -1,0 +1,6 @@
+<launch>
+    <!-- Launch the base.launch file -->
+    <include file="$(find pursuer_pkg)/launch/base.launch"/>
+    <!-- Activate lidar follow node -->
+    <node name='laser_Tracker' pkg="pursuer_pkg" type="laser_Tracker.py" required="true" output="screen"/>
+</launch>

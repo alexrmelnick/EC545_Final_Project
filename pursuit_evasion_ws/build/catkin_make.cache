@@ -1,0 +1,2 @@
+evader_pkg:example_pkg:pursuer_pkg
+-DCATKIN_DEVEL_PREFIX=/home/jetson/pursuit_evasion_ws/devel -DCMAKE_INSTALL_PREFIX=/home/jetson/pursuit_evasion_ws/install -G Unix Makefiles

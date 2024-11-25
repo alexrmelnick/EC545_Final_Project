@@ -1,0 +1,8 @@
+prefix=/home/jetson/pursuit_evasion_ws/install
+
+Name: yahboomcar_laser
+Description: Description of yahboomcar_laser
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: 

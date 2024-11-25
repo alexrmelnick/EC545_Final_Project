@@ -1,0 +1,14 @@
+<launch>
+    <!-- 启动base.launch文件 -->
+    <!-- Launch the base.launch file -->
+    <include file="$(find evader_pkg)/launch/base.launch"/>
+    <!-- include file="base.launch"/ -->
+    <!-- 启动激光雷达避障节点 -->
+    <!-- Activate lidar obstacle avoidance node -->
+    <node name='laser_Avoidance' pkg="evader_pkg" type="laser_Avoidance.py" required="true" output="screen"/>
+    <node name='keyboard_ctrl' pkg="evader_pkg" type="yahboom_keyboard.py"/>
+    <node name='gameplay' pkg="evader_pkg" type="gameplay.py"/>
+    <param name="use_sim_time" value="false"/>
+    <!-- node name='joy_node' pkg="joy" type="joy_node"/ -->
+    <!-- node name='joy_ctrl' pkg="evader_pkg" type="yahboom_joy.py"/ -->
+</launch>

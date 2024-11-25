@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/jetson/pursuit_evasion_ws/src/pursuer_pkg/install/setup.sh
