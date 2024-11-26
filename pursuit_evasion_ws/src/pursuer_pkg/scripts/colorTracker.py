@@ -6,6 +6,7 @@ import cv2 as cv
 from astra_common import simplePID
 from cv_bridge import CvBridge
 from std_msgs.msg import Bool
+from std_msgs.msg import Int32
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import Twist
 from yahboomcar_msgs.msg import Position
@@ -38,7 +39,7 @@ class color_Tracker:
         self.encoding = ['16UC1', '32FC1'] # Depth image encoding
         self.sub_depth = rospy.Subscriber("/camera/depth/image_raw", Image, self.depth_img_Callback, queue_size=1) # Subscribe to depth image
         self.sub_position = rospy.Subscriber("/Current_point", Position, self.positionCallback) # Subscribe to data returned from ColorHSV Program
-        self.sub_laser_distance = rospy.Subscripber("Laser_Distance", minDist, self.laserDistCallback), queue_size=1 )
+        self.sub_laser_distance = rospy.Subscriber("Laser_Distance", Int32, self.laserDistCallback, queue_size=1 )
         #elf.pub_cmdVel = rospy.Publisher('/cmd_vel', Twist, queue_size=10) # Publishes velocity to Yahboom
         Server(ColorTrackerPIDConfig, self.AstraFollowPID_callback) # PID Configuration
         self.linear_PID = (3.0, 0.0, 1.0)
@@ -102,8 +103,10 @@ class color_Tracker:
                     pass
                 else:
                     distance_ = runAvg
-                if distance_ < 500:
-                    distance_ = Laser_Distance
+
+                if distance_ < 500 and self.Laser_Distance > 0: # If object is within 0.5m, distance is determined by LIDAR
+                    distance_ = self.Laser_Distance
+
                 self.controller(self.Center_x, distance_) #Sends the x pixel location and avg distance to be converted to PID speed commands
                 self.Center_prevx = self.Center_x
                 self.Center_prevr = self.Center_r
@@ -167,6 +170,7 @@ class color_Tracker:
 
     def laserDistCallback(self, minDist):
         self.Laser_Distance = minDist
+        rospy.loginfo("Received Laser Distance: {}".format(msg.data))
 
     def cleanup(self): #Closes and cleans up program and nodes
         #self.pub_cmdVel.publish(Twist())
