@@ -3,8 +3,7 @@
 import math
 import numpy as np
 from common import *
-from std_msgs.msg import Bool
-from std_msgs.msg import Int32
+from std_msgs.msg import Bool, Int32, Float32
 from sensor_msgs.msg import LaserScan
 from dynamic_reconfigure.server import Server
 from yahboomcar_laser.cfg import laserTrackerPIDConfig
@@ -24,10 +23,10 @@ class laserDistance:
         self.laserAngle = 90
         self.priorityAngle = 30  # 40
         self.sub_laser = rospy.Subscriber('/scan', LaserScan, self.registerScan, queue_size=1)
-        self.pub_dist = rospy.Publisher('/Laser_Distance', Int32, queue_size=1)
+        self.pub_dist = rospy.Publisher('/Laser_Dist', Bool, queue_size=1)
 
     def cancel(self):
-        self.ros_ctrl.pub_vel.publish(Twist())
+        #self.ros_ctrl.pub_vel.publish(Twist())
         self.ros_ctrl.cancel()
         self.sub_laser.unregister()
         rospy.loginfo("Shutting down this node.")
@@ -56,19 +55,20 @@ class laserDistance:
                 minDistList.append(ranges[i])
                 minDistIDList.append(angle)
         # Find the minimum distance and the ID corresponding to the minimum distance
-        if len(frontDistIDList) == 0 and len(minDistList) == 0:
-            minDist = float('inf')  # No valid distance, fallback to a high value
-        elif len(frontDistIDList) != 0:
+        if len(frontDistIDList) != 0: #uses min distance in front of it
             minDist = min(frontDistList)
             minDistID = frontDistIDList[frontDistList.index(minDist)]
         else:
             minDist = min(minDistList)
             minDistID = minDistIDList[minDistList.index(minDist)]
 
-        rospy.loginfo('minDist: {}, minDistID: {}'.format(minDist, minDistID))
-        
-        self.pub_dist.publish(int(minDist * 1000))  # Convert to millimeters
-        rospy.loginfo(f"Publishing Laser Distance: {minDist}")
+        if minDist != 0 and minDist < 0.5:
+            self.pub_dist.publish(True)
+        else:
+            self.pub_dist.publish(False)
+        #rospy.loginfo('minDist: {}, minDistID: {}'.format(minDist, minDistID))
+        #self.pub_dist.publish(1000 * minDist) # Publish the minimum distance
+
 
 
         
@@ -126,7 +126,6 @@ class laserDistance:
         self.lin_pid.Set_pid(config['lin_Kp'], config['lin_Ki'], config['lin_Kd'])
         self.ang_pid.Set_pid(config['ang_Kp'], config['ang_Ki'], config['ang_Kd'])
         return config
-
 
 if __name__ == '__main__':
     rospy.init_node('Laser_Distance', anonymous=False)

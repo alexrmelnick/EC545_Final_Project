@@ -29,7 +29,7 @@ class laserAvoid:
         self.lastKey = Twist()
         self.go = True
         self.sub_laser = rospy.Subscriber('/scan', LaserScan, self.registerScan, queue_size=1)
-        self.sub_keyboard = rospy.Subscriber('/key_input', Twist, self.addKeyStroke, queue_size=1)
+        self.sub_keyboard = rospy.Subscriber('/key_input', Twist, self.addKeyStroke, queue_size=5)
         self.sub_game = rospy.Subscriber('/evader', Bool, self.on_off, queue_size=1)
         self.buzzer = rospy.Publisher('/Buzzer', Bool, queue_size=1)
 
@@ -79,11 +79,11 @@ class laserAvoid:
                 if abs(angle) > 160:
                     if ranges[i] <= self.ResponseDist: self.front_warning += 1
             # print (self.Left_warning, self.front_warning, self.Right_warning)
-            if self.ros_ctrl.Joy_active or self.switch == True:
-                if self.Moving == True:
-                    self.ros_ctrl.pub_vel.publish(Twist())
-                    self.Moving = not self.Moving
-                return
+            #if self.ros_ctrl.Joy_active or self.switch == True:
+                #if self.Moving == True:
+                    #self.ros_ctrl.pub_vel.publish(Twist())
+                    #self.Moving = not self.Moving
+                #return
             self.Moving = True
             twist = Twist()
             sound_buzzer = True
