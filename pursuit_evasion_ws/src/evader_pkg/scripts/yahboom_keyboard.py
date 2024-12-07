@@ -105,7 +105,7 @@ if __name__ == "__main__":
     angular_limit = rospy.get_param('~angular_speed_limit', 5.0)
     pub = rospy.Publisher('key_input', Twist, queue_size=1)
     xspeed_switch = True
-    (speed, turn) = (0.2, 1.0)
+    (speed, turn) = (0.5, 1.5)
     (x, th) = (0, 0)
     status = 0
     stop = False

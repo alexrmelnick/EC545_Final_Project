@@ -84,7 +84,7 @@ class laserAvoid:
                     #self.ros_ctrl.pub_vel.publish(Twist())
                     #self.Moving = not self.Moving
                 #return
-            self.Moving = True
+            #self.Moving = True
             twist = Twist()
             sound_buzzer = True
             # 左正右负

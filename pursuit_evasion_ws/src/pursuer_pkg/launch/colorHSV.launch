@@ -1,5 +1,7 @@
 <launch>
-    <node pkg="pursuer_pkg" type="colorHSV.py" name="colorHSV" required="true" output="screen">
-        <param name="VideoSwitch" type="bool" value="False"/>
-    </node>
+	<!-- group ns="pursuer" -->
+   	<node pkg="pursuer_pkg" type="colorHSV.py" name="colorHSV" required="true" output="log">
+       	<param name="VideoSwitch" type="bool" value="False"/>
+   	</node>
+    <!-- /group -->
 </launch>

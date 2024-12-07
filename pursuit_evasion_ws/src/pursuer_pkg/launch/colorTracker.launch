@@ -1,14 +1,16 @@
 <launch>
-    <arg name="VideoSwitch" default="true"/>
-    <!-- 手柄控制节点 Handle control node-->
-    <include file="$(find astra_camera)/launch/astra.launch"/>
-    <include file="$(find yahboomcar_bringup)/launch/yahboomcar.launch"/>
-    <include file="$(find usb_cam)/launch/usb_cam-test.launch" unless="$(arg VideoSwitch)"/>
-    <include file="$(find pursuer_pkg)/launch/base.launch"/>
-    <node pkg="pursuer_pkg" type="gameplay.py" name="gamePlay" required="true"/>
-    <node pkg="pursuer_pkg" type="colorTracker.py" name="colorTracker" required="true" output="screen"/>
-    <node pkg="pursuer_pkg" type="colorHSV.py" name="colorHSV" required="true" output="screen" if="$(arg VideoSwitch)">
-        <param name="VideoSwitch" type="bool" value="$(arg VideoSwitch)"/>
-    </node>
-    <node pkg="pursuer_pkg" type="laser_distance.py" name="laser_distance" required="true"/>
+	<!-- group ns="pursuer" -->
+   	<arg name="VideoSwitch" default="true"/>
+   	<!-- 手柄控制节点 Handle control node-->
+   	<include file="$(find astra_camera)/launch/astra.launch"/>
+   	<include file="$(find yahboomcar_bringup)/launch/yahboomcar.launch"/>
+   	<include file="$(find usb_cam)/launch/usb_cam-test.launch" unless="$(arg VideoSwitch)"/>
+   	<include file="$(find pursuer_pkg)/launch/base.launch"/>
+   	<node pkg="pursuer_pkg" type="colorTracker.py" name="colorTracker" required="true" output="screen"/>
+   	<node pkg="pursuer_pkg" type="colorHSV.py" name="colorHSV" required="true" output="screen" if="$(arg VideoSwitch)">
+       	<param name="VideoSwitch" type="bool" value="$(arg VideoSwitch)"/>
+   	</node>
+   	<node pkg="pursuer_pkg" type="laser_distance.py" name="laser_distance" required="true"/>
+   	<!-- /group -->
+   	<node pkg="pursuer_pkg" type="gameplay.py" name="gamePlay" required="true"/>
 </launch>

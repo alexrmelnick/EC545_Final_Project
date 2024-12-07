@@ -28,15 +28,16 @@ class Color_Identify:
         self.select_flags = False
         self.gTracker_state = False
         self.windows_name = 'frame'
-        self.Track_state = 'identify'
+        self.Track_state = 'tracking'
         self.color = color_follow()
         self.cols, self.rows = 0, 0
         self.Mouse_XY = (0, 0)
         self.VideoSwitch = rospy.get_param("~VideoSwitch", False)
-        self.hsv_text = rospkg.RosPack().get_path("pursuer_pkg") + "/scripts/colorHSV.text"
-        Server(ColorHSVConfig, self.dynamic_reconfigure_callback)
-        self.dyn_client = Client(nodeName, timeout=60)
-        self.pub_position = rospy.Publisher("/Current_point", Position, queue_size=10)
+        self.hsv_text = rospkg.RosPack().get_path("pursuer_pkg") + "/scripts/permHSV.text"
+        if os.path.exists(self.hsv_text): self.hsv_range = read_HSV(self.hsv_text)
+        #Server(ColorHSVConfig, self.dynamic_reconfigure_callback)
+        #self.dyn_client = Client(nodeName, timeout=60)
+        self.pub_position = rospy.Publisher("/Current_point", Position, queue_size=1)
         #self.pub_cmdVel = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         if self.VideoSwitch == False:
             from cv_bridge import CvBridge
@@ -63,8 +64,8 @@ class Color_Identify:
         cv.putText(rgb_img, text, (30, 30), cv.FONT_HERSHEY_SIMPLEX, 0.6, (100, 200, 200), 1)
         thread_text = "thread : " + str(len(threading.enumerate()))
         cv.putText(rgb_img, thread_text, (30, 50), cv.FONT_HERSHEY_SIMPLEX, 0.6, (100, 200, 200), 1)
-        if len(binary) != 0: cv.imshow(self.windows_name, ManyImgs(1, ([rgb_img, binary])))
-        else: cv.imshow(self.windows_name, rgb_img)
+        #if len(binary) != 0: cv.imshow(self.windows_name, ManyImgs(1, ([rgb_img, binary])))
+        #else: cv.imshow(self.windows_name, rgb_img)
         self.pub_rgb.publish(self.bridge.cv2_to_imgmsg(rgb_img, "bgr8"))
 
     def onMouse(self, event, x, y, flags, param):
@@ -104,13 +105,13 @@ class Color_Identify:
         if self.Track_state != 'init':
             if len(self.hsv_range) != 0:
                 rgb_img, binary, self.circle = self.color.object_follow(rgb_img, self.hsv_range)
-                if self.dyn_update == True:
-                    write_HSV(self.hsv_text, self.hsv_range)
-                    params = {'Hmin': self.hsv_range[0][0], 'Hmax': self.hsv_range[1][0],
-                              'Smin': self.hsv_range[0][1], 'Smax': self.hsv_range[1][1],
-                              'Vmin': self.hsv_range[0][2], 'Vmax': self.hsv_range[1][2]}
-                    self.dyn_client.update_configuration(params)
-                    self.dyn_update = False
+                #if self.dyn_update == True:
+                    #write_HSV(self.hsv_text, self.hsv_range)
+                    #params = {'Hmin': self.hsv_range[0][0], 'Hmax': self.hsv_range[1][0],
+                              #'Smin': self.hsv_range[0][1], 'Smax': self.hsv_range[1][1],
+                              #'Vmin': self.hsv_range[0][2], 'Vmax': self.hsv_range[1][2]}
+                    #self.dyn_client.update_configuration(params)
+                    #self.dyn_update = False
         if self.Track_state == 'tracking':
             self.Start_state = True
             if self.circle[2] != 0: threading.Thread(
@@ -151,8 +152,11 @@ class Color_Identify:
 
 if __name__ == '__main__':
     astra_tracker = Color_Identify()
-    if astra_tracker.VideoSwitch == False: rospy.spin()
+    if astra_tracker.VideoSwitch == False: 
+        rospy.loginfo("video switch is off")
+        rospy.spin()
     else:
+        rospy.loginfo("video switch is on")
         capture = cv.VideoCapture(0)
         cv_edition = cv.__version__
         if cv_edition[0]=='3': capture.set(cv.CAP_PROP_FOURCC, cv.VideoWriter_fourcc(*'XVID'))

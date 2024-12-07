@@ -20,7 +20,7 @@ class color_Tracker:
         rospy.on_shutdown(self.cleanup)
         self.bot = Rosmaster()
         self.ros_ctrl = ROSCtrl()
-        self.r = rospy.Rate(20)
+        self.r = rospy.Rate(50)
         self.bridge = CvBridge() # ROS to OpenCV 
         self.minDist = 500 # 0.5m minimum distance
         self.Center_x = 0 # X Pixel of detected object 
@@ -34,15 +34,15 @@ class color_Tracker:
         self.Robot_Search = False
         self.new_Search = True
         self.go = True
-        self.timer30_prev = 0
+        self.timer30_prev = time.time()
         self.dist = []
         self.runList = [0]
         # self.Laser_Distance = 0
         self.encoding = ['16UC1', '32FC1'] # Depth image encoding
-        self.sub_game = rospy.Subscriber("/pursuer", Bool, self.on_off, queue_size=1)
-        self.sub_depth = rospy.Subscriber("/camera/depth/image_raw", Image, self.depth_img_Callback, queue_size=1) # Subscribe to depth image
-        self.sub_position = rospy.Subscriber("/Current_point", Position, self.positionCallback) # Subscribe to data returned from ColorHSV Program
-        self.sub_laser_distance = rospy.Subscriber("/Laser_Dist", Bool, self.laserDistCallback, queue_size=1)
+        self.sub_game = rospy.Subscriber("/pursuer", Bool, self.on_off, queue_size = 1)
+        self.sub_depth = rospy.Subscriber("/camera/depth/image_raw", Image, self.depth_img_Callback, queue_size = 1) # Subscribe to depth image
+        self.sub_position = rospy.Subscriber("/Current_point", Position, self.positionCallback, queue_size = 1) # Subscribe to data returned from ColorHSV Program
+        self.sub_laser_distance = rospy.Subscriber("/Laser_Dist", Bool, self.laserDistCallback, queue_size = 1)
         self.pub_captured = rospy.Publisher("/caught", Bool, queue_size=1)
         #self.pub_cmdVel = rospy.Publisher('/cmd_vel', Twist, queue_size=10) # Publishes velocity to Yahboom
         Server(ColorTrackerPIDConfig, self.AstraFollowPID_callback) # PID Configuration
@@ -79,34 +79,34 @@ class color_Tracker:
             depthFrame = self.bridge.imgmsg_to_cv2(msg, desired_encoding=self.encoding[1]) # Convert image to depth image for OpenCV to read
             self.action = cv.waitKey(1)
             now_time = time.time()
-            rospy.loginfo(self.Laser_Distance)
+            #rospy.loginfo(self.Laser_Distance)
             if now_time - self.timer30_prev > 30:
                 # do we want to put an LED color here?
+                self.bot.set_colorful_lamps(0xff, 128, 0, 128)
                 self.pub_captured.publish(False)
                 self.timer30_prev = now_time
                 self.new_Search = True
-                self.runList = [0]
-                self.r.sleep()
+                self.runList = []
             elif self.Laser_Distance == True:
                 twistRev = Twist()
-                twistRev.linear.x = -0.25
+                twistRev.linear.x = -0.5
                 self.ros_ctrl.pub_vel.publish(twistRev)
                 self.new_Search = True
-                self.runList = [0]
+                self.runList = []
                 self.bot.set_colorful_lamps(0xff, 0, 255, 0) #Set LED to green to indicate lidar takeover
                 self.r.sleep()
-            elif self.Center_r != 0: # If something is detected, run this if statement
+            elif self.Center_r != 0 and 50 < int(self.Center_y - 3) and int(self.Center_y + 3) < 480: # If something is detected, run this if statement
                 if now_time - self.prev_time > 5: # If 5ms go by and nothing has changed, assume nothing is detected and radius = 0
                     if self.Center_prevx == self.Center_x and self.Center_prevr == self.Center_r: 
                         self.Center_r = 0
                     self.prev_time = now_time
                 distance = [0, 0, 0, 0, 0]
-                if 0 < int(self.Center_y - 3) and int(self.Center_y + 3) < 480 and 0 < int(self.Center_x - 3) and int(self.Center_x + 3) < 640: # If object is in frame
+                if 50 < int(self.Center_y - 3) and int(self.Center_y + 3) < 480 and 0 < int(self.Center_x - 3) and int(self.Center_x + 3) < 640: # If object is in frame
                     # print("depthFrame: ", len(depthFrame), len(depthFrame[0]))
-                    distance[0] = depthFrame[int(self.Center_y - 3)][int(self.Center_x - 3)] # Calculate an array of distances around the center point of object
-                    distance[1] = depthFrame[int(self.Center_y + 3)][int(self.Center_x - 3)] # Offset by 3 pixels
-                    distance[2] = depthFrame[int(self.Center_y - 3)][int(self.Center_x + 3)]
-                    distance[3] = depthFrame[int(self.Center_y + 3)][int(self.Center_x + 3)]
+                    distance[0] = depthFrame[int(self.Center_y - 2)][int(self.Center_x - 2)] # Calculate an array of distances around the center point of object
+                    distance[1] = depthFrame[int(self.Center_y + 2)][int(self.Center_x - 2)] # Offset by 3 pixels
+                    distance[2] = depthFrame[int(self.Center_y - 2)][int(self.Center_x + 2)]
+                    distance[3] = depthFrame[int(self.Center_y + 2)][int(self.Center_x + 2)]
                     distance[4] = depthFrame[int(self.Center_y)][int(self.Center_x)]
                     distance_ = 0
                     num_depth_points = 5
@@ -124,6 +124,7 @@ class color_Tracker:
                     if len(self.runList) < 5:
                         self.runList.insert(0, distance_)
                         runAvg = sum(self.runList) / len(self.runList)
+                        return
                     else:
                         self.runList.insert(0, distance_)
                         self.runList.pop()
@@ -136,20 +137,31 @@ class color_Tracker:
                     self.Center_prevx = self.Center_x
                     self.Center_prevr = self.Center_r
                     self.prev_dist = distance_
-                    self.prev_angular = self.Center_x
-                    #rospy.loginfo(runAvg)
-            else:
+                    distance_ = 0
+                    #self.prev_angular = self.Center_x
+                    self.r.sleep()
+                else:
                     self.bot.set_colorful_lamps(0xff, 255, 255, 0) #Set LED to yellow to indicate search state
                     twistSearch = Twist()
                     twistSearch.linear.x = 0
                     twistSearch.angular.z = 1
                     self.ros_ctrl.pub_vel.publish(twistSearch) # Robot spins to search for red
                     self.new_Search = True
-                    self.runList = [0]
+                    self.runList = []
                     self.r.sleep()
+                    #rospy.loginfo(runAvg)
+            else:
+                self.bot.set_colorful_lamps(0xff, 255, 255, 0) #Set LED to yellow to indicate search state
+                twistSearch = Twist()
+                twistSearch.linear.x = 0
+                twistSearch.angular.z = 1
+                self.ros_ctrl.pub_vel.publish(twistSearch) # Robot spins to search for red
+                self.new_Search = True
+                self.runList = []
+                self.r.sleep()
             if self.action == ord('q') or self.action == 113: 
                 self.cleanup()
-            cv.imshow("depth_img", depthFrame)
+            #cv.imshow("depth_img", depthFrame)
 
     def controller(self, point_x, dist):
         if self.new_Search == True:
@@ -161,8 +173,6 @@ class color_Tracker:
             if abs(self.prev_angular - point_x) > 100:
                 self.prev_angular = point_x
                 return
-        linear_x = self.linear_pid.compute(dist, self.minDist) # Computes PID for distance between calculated distance and minimum Distance
-        angular_z = self.angular_pid.compute(320, point_x) # Computes PID for distance X coordinate is from center pixel
         if abs(dist - self.minDist) < 100: 
             linear_x = 0
             angular_z = 0
@@ -170,21 +180,26 @@ class color_Tracker:
             twist.angular.z = angular_z
             twist.linear.x = linear_x
             self.bot.set_colorful_lamps(0xff, 0, 0, 255) #Set lamps to blue and pause program when captured other bot
-            self.pub_captured.publish(True)
             self.ros_ctrl.pub_vel.publish(twist)
+            rospy.loginfo("dist: {}, runList: {}".format(dist, self.runList))
             self.new_Search = True
-            self.runList = [0]
-            #rospy.sleep(3.0)
+            self.runList = []
+            self.prev_dist = 2000
+            self.Center_r = 0
+            self.pub_captured.publish(True)
+            return
         else:
             self.bot.set_colorful_lamps(0xff, 255, 0, 0) #Set lamps to red
-        if abs(point_x - 320.0) < 30: 
-            angular_z = 0
-        twist = Twist()
-        twist.angular.z = angular_z
-        twist.linear.x = linear_x
-        self.ros_ctrl.pub_vel.publish(twist)
-        rospy.loginfo("point_x: {},dist: {},linear_x: {}, angular_z: {}".format(point_x, dist, twist.linear.x, twist.angular.z))
-        self.r.sleep()
+            linear_x = self.linear_pid.compute(dist, self.minDist)
+            angular_z = self.angular_pid.compute(320, point_x)
+            if abs(point_x - 320.0) < 30: 
+                angular_z = 0
+            twist = Twist()
+            twist.angular.z = angular_z / 2
+            twist.linear.x = linear_x / 7
+            self.ros_ctrl.pub_vel.publish(twist)
+            rospy.loginfo("dist: {}, linear_x: {}, angular_z: {}".format(dist, twist.linear.x, twist.angular.z))
+            return
 
     def positionCallback(self, msg): #Calls colorHSV function to get color tracking info from camera
         if not isinstance(msg, Position): 
@@ -212,3 +227,4 @@ if __name__ == '__main__':
     rospy.init_node("color_Tracker", anonymous=False)
     color_Tracker()
     rospy.spin()
+    
